@@ -24,6 +24,82 @@ import os
 import xml.etree.ElementTree as ET
 import pandas as pd
 import bz2
+import logging
+
+
+def process_file(filepath):
+    logging.info("Processing: %s" % filepath)
+    # Getting file extension
+    prefix, ext = os.path.splitext(filepath)
+    if ext not in [".bz2", ".xml"]:
+        logging.error("Unknown file extension \"%s\"" % ext)
+        sys.exit()
+
+    # This is an XML file
+    if ext == ".xml":
+        f = open(filepath, "rb")
+
+    # This is a BZ2 file
+    if ext == ".bz2":
+        f = bz2.open(filepath, "rb")
+
+    # Reading the XML data and parsing it
+    xml_data = f.read()
+    root = ET.XML(xml_data)
+    process_xml(root)
+
+
+# This method splits the given XML data according to the structure
+# requirements laid out in the header of this file.
+def process_xml(root):
+    # Working on the "description" node
+    description = root.find("description")
+    if description is None:
+        logging.warning("Could not find the experiments description")
+    else:
+        logging.debug("Found the following description:\n%s" % description.text)
+
+    # Working on the "columns" node
+    columns = root.find("columns")
+    if columns is None:
+        logging.warning("Could not find the output columns names")
+    else:
+        columns_df = pd.DataFrame(xml_list_to_dict_list(columns))
+        logging.debug("The following columns are used by the BenchExec table generator:\n%s" % columns_df)
+
+    # Working on extra columns
+    extra_columns = root.findall("column")
+    if len(extra_columns):
+        extra_columns_df = pd.DataFrame(xml_list_to_dict_list(extra_columns))
+        logging.debug("Found %d extra columns:\n%s" % (len(extra_columns), extra_columns_df))
+
+    # Working on the "systeminfos" node
+    systeminfos = root.findall("systeminfo")
+    if len(systeminfos):
+        systeminfos_df = pd.DataFrame(xml_list_to_dict_list(systeminfos))
+        logging.debug("Found descriptions for %d hosts:\n%s" % (len(systeminfos), systeminfos_df))
+        systeminfos_filepath = filepath + ".systeminfos.csv"
+        # This script is executed without the "-i" option
+        if not sys.flags.interactive:
+            logging.info("The hosts descriptions will be saved to: %s" % systeminfos_filepath)
+            systeminfos_df.to_csv(systeminfos_filepath)
+    else:
+        logging.warning("No hosts descriptions available")
+
+    # Working on the "runs" node
+    runs = root.findall("run")
+    if len(runs):
+        runs_df = pd.DataFrame(xml_list_to_dict_list(runs))
+        logging.debug("Found information about %d runs:\n%s" % (len(runs), runs_df))
+        runs_filepath = filepath + ".runs.csv"
+        # This script is executed without the "-i" option
+        if not sys.flags.interactive:
+            logging.info("The information about the runs will be saved to: %s" % runs_filepath)
+            runs_df.to_csv(runs_filepath)
+    else:
+        logging.warning("No BenchExec runs could be found")
+
+
 
 
 def string_list_to_list(string_list):
@@ -99,91 +175,22 @@ def xml_list_to_dict_list(nodes):
     return result_dict_list
 
 
+
 ##
 #
 # The "main" workflow begins here
 #
 ##
 
+logging.basicConfig(level=logging.INFO)
 # Just exit if there are no command line options
 if len(sys.argv) < 2:
     sys.exit()
 
 # The first argument is the file path, and everything else is ignored for now
 filepath = sys.argv[1]
-print("Working on the file at:", filepath)
+process_file(filepath)
 
-# Getting file extension
-prefix, ext = os.path.splitext(filepath)
-if ext not in [".bz2", ".xml"]:
-    print("*** ERROR: unknown file extension \"%s\"" % ext)
-    sys.exit()
-
-# This is an XML file
-if ext == ".xml":
-    f = open(filepath, "rb")
-
-# This is a BZ2 file
-if ext == ".bz2":
-    f = bz2.open(filepath, "rb")
-
-# Reading the XML data and parsing it
-xml_data = f.read()
-root = ET.XML(xml_data)
-
-# Working on the "description" node
-description = root.find("description")
-if description is None:
-    print("*** WARNING: could not find the experiments description", file=sys.stderr)
-else:
-    print("Description:")
-    print("----------")
-    print(description.text)
-    print("----------")
-
-# Working on the "columns" node
-columns = root.find("columns")
-if columns is None:
-    print("*** WARNING: could not find the output columns names", file=sys.stderr)
-else:
-    print("The following columns are used by the BenchExec table generator:")
-    columns_df = pd.DataFrame(xml_list_to_dict_list(columns))
-    print(columns_df)
-
-# Working on extra columns
-extra_columns = root.findall("column")
-if len(extra_columns):
-    print("Found %d extra columns:" % (len(extra_columns)))
-    extra_columns_df = pd.DataFrame(xml_list_to_dict_list(extra_columns))
-    print(extra_columns_df)
-
-# Working on the "systeminfos" node
-systeminfos = root.findall("systeminfo")
-if len(systeminfos):
-    print("Found descriptions for %d hosts:" % (len(systeminfos)))
-    systeminfos_df = pd.DataFrame(xml_list_to_dict_list(systeminfos))
-    print(systeminfos_df)
-    systeminfos_filepath = filepath + ".systeminfos.csv"
-    # This script is executed without the "-i" option
-    if not sys.flags.interactive:
-        print("The hosts descriptions will be saved to:", systeminfos_filepath)
-        systeminfos_df.to_csv(systeminfos_filepath)
-else:
-    print("*** WARNING: no hosts descriptions available", file=sys.stderr)
-
-# Working on the "runs" node
-runs = root.findall("run")
-if len(runs):
-    print("Found information about %d runs" % (len(runs)))
-    runs_df = pd.DataFrame(xml_list_to_dict_list(runs))
-    print(runs_df)
-    runs_filepath = filepath + ".runs.csv"
-    # This script is executed without the "-i" option
-    if not sys.flags.interactive:
-        print("The information about the runs will be saved to:", runs_filepath)
-        runs_df.to_csv(runs_filepath)
-else:
-    print("*** WARNING: no BenchExec runs could be found", file=sys.stderr)
 
 
 
