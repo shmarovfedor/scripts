@@ -20,8 +20,10 @@
 
 
 import sys
+import os
 import xml.etree.ElementTree as ET
 import pandas as pd
+import bz2
 
 
 def string_list_to_list(string_list):
@@ -60,7 +62,6 @@ def column_node_to_dict(column):
     # Safe to access both attributes now
     result[column.attrib["title"]] = column.attrib["value"]
     return result
-
 
 def xml_to_dict(node):
     result = {}
@@ -112,8 +113,23 @@ if len(sys.argv) < 2:
 filepath = sys.argv[1]
 print("Working on the file at:", filepath)
 
-tree = ET.parse(filepath)
-root = tree.getroot()
+# Getting file extension
+prefix, ext = os.path.splitext(filepath)
+if ext not in [".bz2", ".xml"]:
+    print("*** ERROR: unknown file extension \"%s\"" % ext)
+    sys.exit()
+
+# This is an XML file
+if ext == ".xml":
+    f = open(filepath, "rb")
+
+# This is a BZ2 file
+if ext == ".bz2":
+    f = bz2.open(filepath, "rb")
+
+# Reading the XML data and parsing it
+xml_data = f.read()
+root = ET.XML(xml_data)
 
 # Working on the "description" node
 description = root.find("description")
