@@ -78,9 +78,9 @@ def process_xml(root):
     if len(systeminfos):
         systeminfos_df = pd.DataFrame(xml_list_to_dict_list(systeminfos))
         logging.debug("Found descriptions for %d hosts:\n%s" % (len(systeminfos), systeminfos_df))
-        systeminfos_filepath = filepath + ".systeminfos.csv"
         # This script is executed without the "-i" option
         if not sys.flags.interactive:
+            systeminfos_filepath = filepath + ".systeminfos.csv"
             logging.info("The hosts descriptions will be saved to: %s" % systeminfos_filepath)
             systeminfos_df.to_csv(systeminfos_filepath)
     else:
@@ -91,15 +91,20 @@ def process_xml(root):
     if len(runs):
         runs_df = pd.DataFrame(xml_list_to_dict_list(runs))
         logging.debug("Found information about %d runs:\n%s" % (len(runs), runs_df))
-        runs_filepath = filepath + ".runs.csv"
         # This script is executed without the "-i" option
         if not sys.flags.interactive:
+            runs_filepath = filepath + ".runs.csv"
             logging.info("The information about the runs will be saved to: %s" % runs_filepath)
             runs_df.to_csv(runs_filepath)
     else:
         logging.warning("No BenchExec runs could be found")
 
-
+    df = pd.merge(runs_df, systeminfos_df, left_on="host", right_on="systeminfo_hostname")
+    # This script is executed without the "-i" option
+    if not sys.flags.interactive:
+        merged_filepath = filepath + ".merged.csv"
+        logging.info("The information about the runs will be saved to: %s" % merged_filepath)
+        df.to_csv(merged_filepath)
 
 
 def string_list_to_list(string_list):
@@ -139,9 +144,10 @@ def column_node_to_dict(column):
     result[column.attrib["title"]] = column.attrib["value"]
     return result
 
-def xml_to_dict(node):
+
+def xml_to_dict(node, prefix=''):
     result = {}
-    prefix = node.tag + "_"
+    prefix = prefix + node.tag + "_"
     for attrib_key, attrib_value in node.items():
         key = prefix + attrib_key
         attrib_list = string_list_to_list(attrib_value)
@@ -159,7 +165,7 @@ def xml_to_dict(node):
         if child.tag == "column":
             result.update(column_node_to_dict(child))
         else:
-            result.update(xml_to_dict(child))
+            result.update(xml_to_dict(child, prefix))
 
     return result
 
