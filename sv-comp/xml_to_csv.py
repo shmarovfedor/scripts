@@ -185,11 +185,12 @@ def xml_list_to_dict_list(nodes):
 logging.basicConfig(level=logging.INFO)
 # Just exit if there are no command line options
 if len(sys.argv) < 2:
+    logging.error("No input files specifyed")
     sys.exit()
 
-# The first argument is the file path, and everything else is ignored for now
-filepath = sys.argv[1]
-process_file(filepath)
+# Expecting a list of file paths as command line arguments
+for filepath in sys.argv[1:]:
+    process_file(filepath)
 
 
 
