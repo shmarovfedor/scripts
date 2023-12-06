@@ -1,7 +1,12 @@
 #!/usr/bin/env python3
 
-# This script parses a given results XML file produced by BenchExec,
-# Here the following file layout is expected:
+# Author: Fedor Shmarov
+# Email: fedor.shmarov@newcastle.ac.uk
+
+# This script parses a given results XML (or XML compressing with BZip2) 
+# file produced by BenchExec,
+#
+# The following XML file layout is expected:
 #
 #   result - this the root of the XML tree
 #   |
@@ -17,6 +22,27 @@
 #   |- run          - actual execution statistics for each task
 #   |  ...
 #   |- column       - additional info columns (seems to be overall walltime atm)
+
+# Usage:
+#
+# This script takes XML files and/or XML files compressed with BZip2 as an input.
+# You can run it as follows:
+#
+#   ./xml_to_scv.py <file1>.xml <file2>.bz2 ... <file>.bz2
+#
+# The script will then produce the folloing CSV files:
+#   <file1>.xml.systeminfos.csv     - information about all the machines available to BenchExec
+#   <file1>.xml.runs.csv            - the results of the verifier for each verification task
+#   <file1>.xml.merged.csv          - the combination of the two tables above
+#   ...
+#   results.combined.merged.csv     - merged results for each input file combined into a single table
+#
+# Also, you can run this script in the interactive mode (i.e, with the "-i" flag) as follows:
+#
+#   python -i ./xml_to_scv.py <file1>.xml <file2>.bz2 ... <file>.bz2
+#
+# The script them will not produce any CSV files, and store all the merged and combined results
+# into a single pandas dataframe "df" (which can be further worked on interactively).
 
 
 import sys
@@ -46,7 +72,8 @@ def process_file(filepath):
     # Reading the XML data and parsing it
     xml_data = f.read()
     root = ET.XML(xml_data)
-    process_xml(root)
+    df = process_xml(root)
+    return df
 
 
 # This method splits the given XML data according to the structure
@@ -78,7 +105,7 @@ def process_xml(root):
     if len(systeminfos):
         systeminfos_df = pd.DataFrame(xml_list_to_dict_list(systeminfos))
         logging.debug("Found descriptions for %d hosts:\n%s" % (len(systeminfos), systeminfos_df))
-        # This script is executed without the "-i" option
+        # This script is executed without the "-i" option. So, writing the result into a CSV file
         if not sys.flags.interactive:
             systeminfos_filepath = filepath + ".systeminfos.csv"
             logging.info("The hosts descriptions will be saved to: %s" % systeminfos_filepath)
@@ -91,7 +118,7 @@ def process_xml(root):
     if len(runs):
         runs_df = pd.DataFrame(xml_list_to_dict_list(runs))
         logging.debug("Found information about %d runs:\n%s" % (len(runs), runs_df))
-        # This script is executed without the "-i" option
+        # This script is executed without the "-i" option. So, writing the result into a CSV file
         if not sys.flags.interactive:
             runs_filepath = filepath + ".runs.csv"
             logging.info("The information about the runs will be saved to: %s" % runs_filepath)
@@ -100,18 +127,19 @@ def process_xml(root):
         logging.warning("No BenchExec runs could be found")
 
     df = pd.merge(runs_df, systeminfos_df, left_on="host", right_on="systeminfo_hostname")
-    # This script is executed without the "-i" option
+    # This script is executed without the "-i" option. So, writing the result into a CSV file
     if not sys.flags.interactive:
         merged_filepath = filepath + ".merged.csv"
-        logging.info("The information about the runs will be saved to: %s" % merged_filepath)
+        logging.info("The information about the runs merged with the hosts descriptions will be saved to: %s" % merged_filepath)
         df.to_csv(merged_filepath)
+    return df
 
 
 def string_list_to_list(string_list):
     return string_list.strip('][').split(', ')
 
 
-# This method converts a special case node with a tag "column" into dictionary.
+# This method converts a special case node with a tag "column" into a dictionary.
 # The following structure is assumed. Attributes "title" and "value" must
 # be present, and all other attributes are ignored.
 #
@@ -188,17 +216,29 @@ def xml_list_to_dict_list(nodes):
 #
 ##
 
+# Setting up logging configs
 logging.basicConfig(level=logging.INFO)
+
+# This script is executed interactively (i.e.,  with the "-i" option)
+if sys.flags.interactive:
+    logging.info("Running the script in the interactive mode. No CSV files will be produced. The final result will be stored in the \"df\" data frame")
+
 # Just exit if there are no command line options
 if len(sys.argv) < 2:
     logging.error("No input files specifyed")
     sys.exit()
 
 # Expecting a list of file paths as command line arguments
+df = pd.DataFrame()
 for filepath in sys.argv[1:]:
-    process_file(filepath)
+    # Processing the input files and merging them into a combined dataframe
+    df = pd.concat([df, process_file(filepath)], ignore_index=True)
 
-
+# This script is executed without the "-i" option. So, writing the result into a CSV file
+if not sys.flags.interactive:
+    results_filepath = "results.combined.merged.csv"
+    logging.info("The final merged and combined results will be saved to: %s" % results_filepath)
+    df.to_csv(results_filepath)
 
 
 
