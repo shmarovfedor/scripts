@@ -126,13 +126,22 @@ def process_xml(root):
     else:
         logging.warning("No BenchExec runs could be found")
 
-    df = pd.merge(runs_df, systeminfos_df, left_on="host", right_on="systeminfo_hostname")
-    # This script is executed without the "-i" option. So, writing the result into a CSV file
-    if not sys.flags.interactive:
-        merged_filepath = filepath + ".merged.csv"
-        logging.info("The information about the runs merged with the hosts descriptions will be saved to: %s" % merged_filepath)
-        df.to_csv(merged_filepath)
-    return df
+    if "host" in runs_df.columns and "host" in systeminfos_df.columns:
+        df = pd.merge(runs_df, systeminfos_df, left_on="host", right_on="systeminfo_hostname")
+        # This script is executed without the "-i" option. So, writing the result into a CSV file
+        if not sys.flags.interactive:
+            merged_filepath = filepath + ".merged.csv"
+            logging.info("The information about the runs merged with the hosts descriptions will be saved to: %s" % merged_filepath)
+            df.to_csv(merged_filepath)
+        return df
+    else:
+        logging.warning("Could not find host info in %s" % filepath)
+        filename = os.path.basename(filepath)
+        logging.warning("Extracting this information from the name of the filename \"%s\"" % filename)
+        hostname = filename.split(".")[0]
+        logging.warning("Extracted hostname: \"%s\"" % hostname)
+        runs_df["host"] = hostname
+        return runs_df
 
 
 def string_list_to_list(string_list):
