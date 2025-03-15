@@ -12,6 +12,7 @@ from collections import OrderedDict
 def add_extra_columns(df):
     # picking the filename and the subcategory from the filepath
     df["run_filename"] = df["run_name"].apply(lambda path : path.split("/")[-1])
+    df["run_filename_clean"] = df["run_filename"].apply(lambda path : path.split(".")[0])
     df["run_subcategory"] = df["run_name"].apply(lambda path : path.split("/")[-2])
     return df
 
@@ -45,10 +46,38 @@ print(df.columns)
 #print((df["category"] == "wrong").unique())
 
 df_correct = df[(df["category"] == "correct")]
+df_correct_true = df_correct[(df_correct["run_expectedVerdict"] == True)]
+df_correct_false = df_correct[(df_correct["run_expectedVerdict"] == False)]
 df_wrong = df[(df["category"] == "wrong")]
+df_wrong_true = df_wrong[(df_wrong["run_expectedVerdict"] == True)]
+df_wrong_false = df_wrong[(df_wrong["run_expectedVerdict"] == False)]
+df_timeout = df[(df["terminationreason"] == "cputime")]
 
-print(df_correct)
-print(df_wrong)
+df_correct_or_timeout = pd.concat([df_correct, df_timeout], axis = 0)
+
+print(df_correct_or_timeout["cputime"].mean())
+print(df["run_subcategory"].unique())
+
+for subcategory in df["run_subcategory"].unique():
+    df_subcat = df_correct[(df_correct["run_subcategory"] == subcategory)]
+    labels = []
+    times = []
+    i = 0
+    for task in df_subcat["run_filename_clean"].unique():
+        df_task = df_subcat[(df_subcat["run_filename_clean"] == task)]
+        times.append(df_task["cputime"])
+        labels.append(task)
+        for point in df_task["cputime"]:
+            plt.scatter(i, point, color="red")
+        i = i + 1
+
+    plt.title(str("Subcategory: " + subcategory))
+    plt.xlabel("Benchmark name")
+    plt.ylabel("CPU time (s)")
+    plt.xticks(range(0, len(df_subcat["run_filename"].unique())), labels = labels, rotation=90)
+    plt.tight_layout()
+    plt.ylim(-30, 1000)
+    plt.show()
 
 
 # only final verdicts and timeouts
