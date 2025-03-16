@@ -6,6 +6,9 @@ from collections import Counter
 import matplotlib.pyplot as plt
 import numpy as np
 from collections import OrderedDict
+from matplotlib.lines import Line2D
+import math
+
 
 
 ## adding extra columns
@@ -52,14 +55,15 @@ df_wrong = df[(df["category"] == "wrong")]
 df_wrong_true = df_wrong[(df_wrong["run_expectedVerdict"] == True)]
 df_wrong_false = df_wrong[(df_wrong["run_expectedVerdict"] == False)]
 df_timeout = df[(df["terminationreason"] == "cputime")]
+df_oom = df[(df["terminationreason"] == "memory")]
 
-df_correct_or_timeout = pd.concat([df_correct, df_timeout], axis = 0)
+df_verdict = pd.concat([df_correct, df_wrong, df_timeout, df_oom], axis = 0)
 
-print(df_correct_or_timeout["cputime"].mean())
 print(df["run_subcategory"].unique())
+print(df_verdict)
 
 for subcategory in df["run_subcategory"].unique():
-    df_subcat = df_correct[(df_correct["run_subcategory"] == subcategory)]
+    df_subcat = df_verdict[(df_verdict["run_subcategory"] == subcategory)].sort_values("run_filename_clean")
     labels = []
     times = []
     i = 0
@@ -67,16 +71,45 @@ for subcategory in df["run_subcategory"].unique():
         df_task = df_subcat[(df_subcat["run_filename_clean"] == task)]
         times.append(df_task["cputime"])
         labels.append(task)
-        for point in df_task["cputime"]:
-            plt.scatter(i, point, color="red")
+        for index, rec in df_task.iterrows():
+            if (rec["category"] == "correct") & (rec["run_expectedVerdict"]):
+                color = "green"
+                marker = "^"
+            if (rec["category"] == "correct") & (~rec["run_expectedVerdict"]):
+                color = "green"
+                marker = "v"
+            if (rec["category"] == "wrong") & (rec["run_expectedVerdict"]):
+                color = "red"
+                marker = "^"
+            if (rec["category"] == "wrong") & (~rec["run_expectedVerdict"]):
+                color = "red"
+                marker = "v"
+            if (rec["terminationreason"] == "cputime"):
+                color = "black"
+                marker = "x"
+            if (rec["terminationreason"] == "memory"):
+                color = "black"
+                marker = "+"
+            plt.scatter(i, math.log(rec["cputime"]), color=color, marker=marker)
         i = i + 1
+
+    legend = [
+            Line2D([0], [0], marker='^', color="white", markerfacecolor='green', label='correct true', markersize=9),
+            Line2D([0], [0], marker='v', color="white", markerfacecolor='green', label='correct false', markersize=9),
+            Line2D([0], [0], marker='^', color="white", markerfacecolor='red', label='incorrect true', markersize=9),
+            Line2D([0], [0], marker='v', color="white", markerfacecolor='red', label='incorrect false', markersize=9),
+            Line2D([0], [0], marker='x', color="white", markeredgecolor='black', label='timeout', markersize=7),
+            Line2D([0], [0], marker='+', color="white", markeredgecolor='black', label='out of memory', markersize=9),
+            ]
 
     plt.title(str("Subcategory: " + subcategory))
     plt.xlabel("Benchmark name")
-    plt.ylabel("CPU time (s)")
-    plt.xticks(range(0, len(df_subcat["run_filename"].unique())), labels = labels, rotation=90)
+    plt.ylabel("CPU time log(s)")
+    plt.xticks(range(0, len(labels)), labels = labels, rotation=90)
     plt.tight_layout()
-    plt.ylim(-30, 1000)
+    #plt.ylim(-30, 1000)
+    plt.xlim(-1, len(labels))
+    plt.legend(handles=legend)
     plt.show()
 
 
