@@ -1,4 +1,4 @@
- #!/usr/bin/env python3
+#!/usr/bin/env python3
 
 import sys
 import pandas as pd
@@ -57,7 +57,10 @@ df_wrong_false = df_wrong[(df_wrong["run_expectedVerdict"] == False)]
 df_timeout = df[(df["terminationreason"] == "cputime")]
 df_oom = df[(df["terminationreason"] == "memory")]
 
-df_verdict = pd.concat([df_correct, df_wrong, df_timeout, df_oom], axis = 0)
+
+## Generating a Figure "verdicts per benchmark"
+df_verdict = pd.concat([df_correct, df_wrong], axis = 0)
+#df_verdict_timeout_oom = pd.concat([df_correct, df_wrong, df_timeout, df_oom], axis = 0)
 
 print(df["run_subcategory"].unique())
 print(df_verdict)
@@ -84,13 +87,13 @@ for subcategory in df["run_subcategory"].unique():
             if (rec["category"] == "wrong") & (~rec["run_expectedVerdict"]):
                 color = "red"
                 marker = "v"
-            if (rec["terminationreason"] == "cputime"):
-                color = "black"
-                marker = "x"
-            if (rec["terminationreason"] == "memory"):
-                color = "black"
-                marker = "+"
-            plt.scatter(i, math.log(rec["cputime"]), color=color, marker=marker)
+            #if (rec["terminationreason"] == "cputime"):
+            #    color = "black"
+            #    marker = "x"
+            #if (rec["terminationreason"] == "memory"):
+            #    color = "black"
+            #    marker = "+"
+            plt.scatter(i, math.log(rec["cputime"] + 1), color=color, marker=marker)
         i = i + 1
 
     legend = [
@@ -98,16 +101,17 @@ for subcategory in df["run_subcategory"].unique():
             Line2D([0], [0], marker='v', color="white", markerfacecolor='green', label='correct false', markersize=9),
             Line2D([0], [0], marker='^', color="white", markerfacecolor='red', label='incorrect true', markersize=9),
             Line2D([0], [0], marker='v', color="white", markerfacecolor='red', label='incorrect false', markersize=9),
-            Line2D([0], [0], marker='x', color="white", markeredgecolor='black', label='timeout', markersize=7),
-            Line2D([0], [0], marker='+', color="white", markeredgecolor='black', label='out of memory', markersize=9),
+            #Line2D([0], [0], marker='x', color="white", markeredgecolor='black', label='timeout', markersize=7),
+            #Line2D([0], [0], marker='+', color="white", markeredgecolor='black', label='out of memory', markersize=9),
             ]
 
     plt.title(str("Subcategory: " + subcategory))
     plt.xlabel("Benchmark name")
-    plt.ylabel("CPU time log(s)")
+    plt.ylabel("CPU time [log(time + 1)]")
     plt.xticks(range(0, len(labels)), labels = labels, rotation=90)
     plt.tight_layout()
     #plt.ylim(-30, 1000)
+    plt.ylim(-1, 10)
     plt.xlim(-1, len(labels))
     plt.legend(handles=legend)
     plt.show()
@@ -117,8 +121,7 @@ for subcategory in df["run_subcategory"].unique():
 #df_verdict_and_timeout
 
 
-exit()
-
+## Generating Figures "statistics per tool"
 solvers = df["host"].unique()
 
 correct_true = dict(zip(solvers, [0] * len(solvers)))
@@ -210,60 +213,66 @@ total = OrderedDict(sorted(total.items()))
 x_axis = np.arange(len(correct_true)) * 5
 plt.bar(x_axis, correct_true.values(), width = 1, label = "correct true")
 for i, value in enumerate(correct_true.values()):
-    plt.text(x_axis[i], value + 5, str(value), ha='center')
+    plt.text(x_axis[i], value + 5, str(value), ha='center', rotation=90)
 
 plt.bar(x_axis + 1, correct_false.values(), width = 1, label = "correct false")
 for i, value in enumerate(correct_false.values()):
-    plt.text(x_axis[i] + 1, value + 5, str(value), ha='center')
+    plt.text(x_axis[i] + 1, value + 5, str(value), ha='center', rotation=90)
 
 plt.bar(x_axis + 2, incorrect_true.values(), width = 1, label = "incorrect true")
 for i, value in enumerate(incorrect_true.values()):
-    plt.text(x_axis[i] + 2, value + 5, str(value), ha='center')
+    plt.text(x_axis[i] + 2, value + 5, str(value), ha='center', rotation=90)
 
 plt.bar(x_axis + 3, incorrect_false.values(), width = 1, label = "incorrect false")
 for i, value in enumerate(incorrect_false.values()):
-    plt.text(x_axis[i] + 3, value + 5, str(value), ha='center')
+    plt.text(x_axis[i] + 3, value + 5, str(value), ha='center', rotation=90)
 
 plt.xticks(x_axis + 2, correct_true.keys())
+plt.title("True/false verdicts returned by the verifiers")
+plt.xlabel("Verifier name")
+plt.ylabel("# of benchmarks")
 plt.legend()
 plt.show()
 
 
 # plotting everything here
-x_axis = np.arange(len(correct_true)) * 9
+x_axis = np.arange(len(correct_true)) * 11
 plt.bar(x_axis, correct_true.values(), width = 1, label = "correct true")
 for i, value in enumerate(correct_true.values()):
-    plt.text(x_axis[i], value + 5, str(value), ha='center')
+    plt.text(x_axis[i], value + 5, str(value), ha='center', rotation=90)
 
 plt.bar(x_axis + 1, correct_false.values(), width = 1, label = "correct false")
 for i, value in enumerate(correct_false.values()):
-    plt.text(x_axis[i] + 1, value + 5, str(value), ha='center')
+    plt.text(x_axis[i] + 1, value + 5, str(value), ha='center', rotation=90)
 
 plt.bar(x_axis + 2, incorrect_true.values(), width = 1, label = "incorrect true")
 for i, value in enumerate(incorrect_true.values()):
-    plt.text(x_axis[i] + 2, value + 5, str(value), ha='center')
+    plt.text(x_axis[i] + 2, value + 5, str(value), ha='center', rotation=90)
 
 plt.bar(x_axis + 3, incorrect_false.values(), width = 1, label = "incorrect false")
 for i, value in enumerate(incorrect_false.values()):
-    plt.text(x_axis[i] + 3, value + 5, str(value), ha='center')
+    plt.text(x_axis[i] + 3, value + 5, str(value), ha='center', rotation=90)
 
 plt.bar(x_axis + 4, unknown.values(), width = 1, label = "unknown")
 for i, value in enumerate(unknown.values()):
-    plt.text(x_axis[i] + 4, value + 5, str(value), ha='center')
+    plt.text(x_axis[i] + 4, value + 5, str(value), ha='center', rotation=90)
 
 plt.bar(x_axis + 5, timeout.values(), width = 1, label = "timeout")
 for i, value in enumerate(timeout.values()):
-    plt.text(x_axis[i] + 5, value + 5, str(value), ha='center')
+    plt.text(x_axis[i] + 5, value + 5, str(value), ha='center', rotation=90)
 
-plt.bar(x_axis + 6, out_of_memory.values(), width = 1, label = "iout of memory")
+plt.bar(x_axis + 6, out_of_memory.values(), width = 1, label = "out of memory")
 for i, value in enumerate(out_of_memory.values()):
-    plt.text(x_axis[i] + 6, value + 5, str(value), ha='center')
+    plt.text(x_axis[i] + 6, value + 5, str(value), ha='center', rotation=90)
 
 plt.bar(x_axis + 7, other.values(), width = 1, label = "other (errors)")
 for i, value in enumerate(other.values()):
-    plt.text(x_axis[i] + 7, value + 5, str(value), ha='center')
+    plt.text(x_axis[i] + 7, value + 5, str(value), ha='center', rotation=90)
 
 plt.xticks(x_axis + 4, correct_true.keys())
+plt.title("All categories of verdicts returned by the verifiers")
+plt.xlabel("Verifier name")
+plt.ylabel("# of benchmarks")
 plt.legend()
 plt.show()
 
