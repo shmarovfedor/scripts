@@ -213,3 +213,67 @@ plt.savefig("verifiers_all_verdicts.pdf",
 
 
 
+## Analysing time distributions for all the "unknown" verdicts
+df_unknown = df[(df["category"] == "unknown")]
+
+plt.clf()
+plt.tight_layout()
+
+plt.hist(df_unknown["cputime"], bins = 50, edgecolor = "black", color = "green")
+plt.title("Distribution of CPU time taken to return \"UNKNOWN\" verdicts")
+plt.xlabel("Termination time (s)")
+plt.ylabel("# of benchmarks")
+
+memo = "\"UNKNOWN\" verdicts by verifier:\n"
+for solver in solvers:
+    memo = memo + solver + " : " + str(unknown[solver]) + "\n"
+
+plt.text(200, 20, memo)
+plt.gca().set_aspect(0.15)
+plt.savefig("unknowns_time_dist.pdf",
+        bbox_inches = "tight", 
+        orientation = "landscape")
+
+
+
+
+## Analysing time distributions for all the "unknown" verdicts
+df_error = df[(df["category"] == "error") 
+            & ~(df["status"] == "TIMEOUT")
+            & ~(df["status"] == "TIMEOUT (ERROR - no output)")
+            & ~(df["status"] == "OUT OF MEMORY")
+            & ~(df["status"] == "OUT OF MEMORY (ERROR - no output)")]
+
+plt.clf()
+plt.tight_layout()
+
+plt.hist(df_error["cputime"], bins = 50, edgecolor = "black", color = "red")
+plt.title("Distribution of CPU time taken to return \"ERROR\" verdicts")
+plt.xlabel("Termination time (s)")
+plt.ylabel("# of benchmarks")
+
+memo = "\"ERROR\" verdicts by verifier:\n"
+for solver in solvers:
+    memo = memo + solver + " : " + str(other[solver]) + "\n"
+
+plt.text(300, 20, memo)
+plt.gca().set_aspect(1)
+plt.savefig("errors_time_dist.pdf",
+        bbox_inches = "tight", 
+        orientation = "landscape")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
