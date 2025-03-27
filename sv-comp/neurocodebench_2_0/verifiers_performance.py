@@ -211,6 +211,27 @@ plt.savefig("verifiers_all_verdicts.pdf",
         orientation = "landscape")
 
 
+## Analysing time distributions for all the "true/false" verdicts
+df_verdict = df[(df["category"] == "correct") | (df["category"] == "wrong")] 
+
+plt.clf()
+plt.tight_layout()
+
+plt.hist(df_verdict["cputime"], bins = 50, edgecolor = "black", color = "blue")
+plt.title("Distribution of CPU time taken to return \"TRUE / FALSE\" verdicts")
+plt.xlabel("Termination time (s)")
+plt.ylabel("# of benchmarks")
+
+memo = "\"TRUE / FALSE\" verdicts by verifier:\n"
+for solver in solvers:
+    memo = memo + solver + " : " + str(other[solver]) + "\n"
+
+plt.text(300, 20, memo)
+plt.gca().set_aspect(0.6)
+plt.xlim(0, 920)
+plt.savefig("true_false_time_dist.pdf",
+        bbox_inches = "tight", 
+        orientation = "landscape")
 
 
 ## Analysing time distributions for all the "unknown" verdicts
@@ -229,12 +250,11 @@ for solver in solvers:
     memo = memo + solver + " : " + str(unknown[solver]) + "\n"
 
 plt.text(200, 20, memo)
-plt.gca().set_aspect(0.15)
+plt.gca().set_aspect(0.35)
+plt.xlim(0, 920)
 plt.savefig("unknowns_time_dist.pdf",
         bbox_inches = "tight", 
         orientation = "landscape")
-
-
 
 
 ## Analysing time distributions for all the "unknown" verdicts
@@ -258,6 +278,7 @@ for solver in solvers:
 
 plt.text(300, 20, memo)
 plt.gca().set_aspect(1)
+plt.xlim(0, 920)
 plt.savefig("errors_time_dist.pdf",
         bbox_inches = "tight", 
         orientation = "landscape")
