@@ -28,25 +28,29 @@ def tudy_up(df):
     df["memory"] = df["memory"].apply(lambda mem : int(mem.replace("B", "")))
     return df
 
+## creating a DataFrame from file, and adding the "data source" column
+def load_df_from_file(filepath):
+    df = pd.read_csv(filepath)
+    df["data_source"] = filepath
+    return df
+
 
 
 
 ## main()
 
-filepath = sys.argv[1]
-df = pd.read_csv(filepath)
-df = add_extra_columns(df)
-df = tudy_up(df)
+df = pd.DataFrame()
 
-print(df.columns)
+for arg in sys.argv[1:]:
+    new_df = load_df_from_file(arg)
+    new_df = add_extra_columns(new_df)
+    new_df = tudy_up(new_df)
+    df = pd.concat([df, new_df], ignore_index = True)
+
+print(df["data_source"].unique())
 
 # just to check whether termination reason "cputime" means a TIMEOUT
 # and "memory" means OUT OF MEMORY
-#print(df[(df["terminationreason"] == "cputime")]["status"].unique()) 
-#print(df[(df["terminationreason"] == "memory")]["status"].unique()) 
-#print(df[(df["category"] == "error")]["status"].unique())
-#print((df["category"] == "correct").unique())
-#print((df["category"] == "wrong").unique())
 
 df_correct = df[(df["category"] == "correct")]
 df_correct_true = df_correct[(df_correct["run_expectedVerdict"] == True)]
@@ -59,11 +63,11 @@ df_oom = df[(df["terminationreason"] == "memory")]
 
 
 ## Generating a Figure "verdicts per benchmark"
-df_verdict = pd.concat([df_correct, df_wrong], axis = 0)
+df_verdict = pd.concat([df_correct, df_wrong, df_timeout, df_oom], axis = 0)
 #df_verdict_timeout_oom = pd.concat([df_correct, df_wrong, df_timeout, df_oom], axis = 0)
 
-print(df["run_subcategory"].unique())
-print(df_verdict)
+#print(df["run_subcategory"].unique())
+#print(df_verdict)
 
 for subcategory in df["run_subcategory"].unique():
     df_subcat = df_verdict[(df_verdict["run_subcategory"] == subcategory)].sort_values("run_filename_clean")
@@ -71,38 +75,45 @@ for subcategory in df["run_subcategory"].unique():
     times = []
     i = 0
     for task in df_subcat["run_filename_clean"].unique():
-        df_task = df_subcat[(df_subcat["run_filename_clean"] == task)]
-        times.append(df_task["cputime"])
         labels.append(task)
+        df_task = df_subcat[(df_subcat["run_filename_clean"] == task)]
+        df_task = df_task.sort_values("cputime")
+        new_df_task = pd.DataFrame(columns=df_task.columns)
+        for data_src in df_task["data_source"].unique():
+            for index, rec in df_task.iterrows():
+                if(rec["data_source"] == data_src):
+                    new_df_task.loc[len(new_df_task)] = rec
+                    break
+        df_task = new_df_task
         for index, rec in df_task.iterrows():
-            if (rec["category"] == "correct") & (rec["run_expectedVerdict"]):
-                color = "green"
-                marker = "^"
-            if (rec["category"] == "correct") & (~rec["run_expectedVerdict"]):
-                color = "green"
-                marker = "v"
-            if (rec["category"] == "wrong") & (rec["run_expectedVerdict"]):
+            # different colours for different data sources
+            if (rec["data_source"] == "plain_results/results.combined.merged.csv"):
+                color = "black"
+            if (rec["data_source"] == "musl_results/results.combined.merged.csv"):
                 color = "red"
+            if (rec["data_source"] == "core_math_results/results.combined.merged.csv"):
+                color = "blue"
+            
+            # different markers for different outcomes
+            if (rec["category"] == "correct"):
                 marker = "^"
-            if (rec["category"] == "wrong") & (~rec["run_expectedVerdict"]):
-                color = "red"
+            if (rec["category"] == "wrong"):
                 marker = "v"
-            #if (rec["terminationreason"] == "cputime"):
-            #    color = "black"
-            #    marker = "x"
-            #if (rec["terminationreason"] == "memory"):
-            #    color = "black"
-            #    marker = "+"
+            if (rec["terminationreason"] == "cputime"):
+                marker = "x"
+            if (rec["terminationreason"] == "memory"):
+                marker = "+"
             plt.scatter(i, math.log(rec["cputime"] + 1), color=color, marker=marker)
         i = i + 1
 
     legend = [
-            Line2D([0], [0], marker='^', color="white", markerfacecolor='green', label='correct true', markersize=9),
-            Line2D([0], [0], marker='v', color="white", markerfacecolor='green', label='correct false', markersize=9),
-            Line2D([0], [0], marker='^', color="white", markerfacecolor='red', label='incorrect true', markersize=9),
-            Line2D([0], [0], marker='v', color="white", markerfacecolor='red', label='incorrect false', markersize=9),
-            #Line2D([0], [0], marker='x', color="white", markeredgecolor='black', label='timeout', markersize=7),
-            #Line2D([0], [0], marker='+', color="white", markeredgecolor='black', label='out of memory', markersize=9),
+            Line2D([0], [0], marker='^', color="white", markerfacecolor='black', label='correct', markersize=9),
+            Line2D([0], [0], marker='v', color="white", markerfacecolor='black', label='incorrect', markersize=9),
+            Line2D([0], [0], marker='x', color="white", markeredgecolor='black', label='timeout', markersize=7),
+            Line2D([0], [0], marker='+', color="white", markeredgecolor='black', label='out of memory', markersize=7),
+            Line2D([0], [0], marker='s', color="white", markerfacecolor='black', label='Plain', markersize=9),
+            Line2D([0], [0], marker='s', color="white", markerfacecolor='red', label='MUSL', markersize=9),
+            Line2D([0], [0], marker='s', color="white", markerfacecolor='blue', label='CORE_MATH', markersize=9),
             ]
 
     plt.title(str("Subcategory: " + subcategory))
@@ -115,6 +126,7 @@ for subcategory in df["run_subcategory"].unique():
     plt.xlim(-1, len(labels))
     plt.legend(handles=legend)
     plt.show()
+    #exit()
 
 
 # only final verdicts and timeouts
