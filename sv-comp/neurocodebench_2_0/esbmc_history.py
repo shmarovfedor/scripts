@@ -234,17 +234,32 @@ for source in source_list:
 
 df["year"] = year_list
 
+# exclude ESBMC 2024
+#df = df[~(df["year"] == 2024)]
+
+print("Overall CPU time: ", df["cputime"].sum())
+
+
+
 correct_true = []
 correct_false = []
 incorrect_true = []
 incorrect_false = []
 for year in df["year"].unique():
     df_year = df[df["year"] == year]
-    correct_true.append(len(df_year[(df_year["category"] == "correct") & (df_year["run_expectedVerdict"] == True)]))
-    correct_false.append(len(df_year[(df_year["category"] == "correct") & (df_year["run_expectedVerdict"] == False)]))
-    incorrect_true.append(len(df_year[(df_year["category"] == "wrong") & (df_year["run_expectedVerdict"] == False)]))
-    incorrect_false.append(len(df_year[(df_year["category"] == "wrong") & (df_year["run_expectedVerdict"] == True)]))
-    print(year)
+    #correct_true.append(len(df_year[(df_year["category"] == "correct") & (df_year["run_expectedVerdict"] == True)]))
+    #correct_false.append(len(df_year[(df_year["category"] == "correct") & (df_year["run_expectedVerdict"] == False)]))
+    #incorrect_true.append(len(df_year[(df_year["category"] == "wrong") & (df_year["run_expectedVerdict"] == False)]))
+    #incorrect_false.append(len(df_year[(df_year["category"] == "wrong") & (df_year["run_expectedVerdict"] == True)]))
+    #print(year)
+    res = get_all_stats_for_verifier(df_year, "esbmc")
+    print("Year: ", year)
+    for key in res:
+        print(key, ":", len(res[key]))
+    print("--------------------")
+
+exit()
+    
 
 years = df["year"].unique()
 

@@ -3,6 +3,7 @@
 import sys
 import pandas as pd
 from collections import Counter
+from matplotlib import rc
 import matplotlib.pyplot as plt
 import numpy as np
 from collections import OrderedDict
@@ -40,6 +41,9 @@ shades = sat_relu_shades
 #shades = lipschitz_shades
 #shades = poly_shades
 #shades = hopfield_shades
+
+## setting the font family
+rc('font', **{'family': 'serif', 'serif': ['Linux Libertine O']})
 
 ## plotting CPU time in the top subplot
 plt.subplot(2,1,1)
