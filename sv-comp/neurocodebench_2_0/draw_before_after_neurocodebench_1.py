@@ -62,8 +62,8 @@ fig = plt.figure(figsize = (9, 4), dpi = 100)
 # setting the font family
 rc('font', **{'family': 'serif', 'serif': ['Linux Libertine O']})
 
-text_font_size = 16
-text_vspace = 5
+text_font_size = 20
+text_vspace = 10
 
 # before
 i = 0
@@ -83,18 +83,18 @@ for tool in before:
     i = i + 4
 
 legend = [
-        Line2D([0], [0], marker='s', color="white", markerfacecolor='blue', label='correct', markersize=14),
-        Line2D([0], [0], marker='s', color="white", markerfacecolor='red', label='incorrect', markersize=14),
-        Line2D([0], [0], marker='s', color="white", markerfacecolor='black', label='unknown', markersize=14),
+        Line2D([0], [0], marker='s', color="white", markerfacecolor='blue', label='correct', markersize=18),
+        Line2D([0], [0], marker='s', color="white", markerfacecolor='red', label='incorrect', markersize=18),
+        Line2D([0], [0], marker='s', color="white", markerfacecolor='black', label='unknown', markersize=18),
         ]
-plt.legend(handles=legend, fontsize=18, ncols=3)
-plt.xticks([1, 5, 9, 13, 17], before.keys(), fontsize=18)
-plt.title("August 2023", fontsize = 20)
-plt.ylabel("# benchmarks", fontsize = 20)
-plt.yticks(fontsize = 18)
-plt.ylim([0, 800])
-plt.subplots_adjust(left=0.1, bottom=0.1, right=0.99, 
-        top=0.92, wspace=0.1, hspace=0.1)
+plt.legend(handles=legend, fontsize=22, ncols=3)
+plt.xticks([1, 5, 9, 13, 17], before.keys(), fontsize=22)
+plt.title("August 2023", fontsize = 26)
+plt.ylabel("# benchmarks", fontsize = 26)
+plt.yticks(fontsize = 24)
+plt.ylim([0, 900])
+plt.subplots_adjust(left=0.12, bottom=0.1, right=0.99, 
+        top=0.91, wspace=0.1, hspace=0.1)
 
 plt.show()
 fig.savefig("sv_comp_before.pdf", format = "pdf")
@@ -121,19 +121,20 @@ for tool in after:
     i = i + 4
 
 legend = [
-        Line2D([0], [0], marker='s', color="white", markerfacecolor='blue', label='correct', markersize=14),
-        Line2D([0], [0], marker='s', color="white", markerfacecolor='red', label='incorrect', markersize=14),
-        Line2D([0], [0], marker='s', color="white", markerfacecolor='black', label='unknown', markersize=14),
+        Line2D([0], [0], marker='s', color="white", markerfacecolor='blue', label='correct', markersize=18),
+        Line2D([0], [0], marker='s', color="white", markerfacecolor='red', label='incorrect', markersize=18),
+        Line2D([0], [0], marker='s', color="white", markerfacecolor='black', label='unknown', markersize=18),
         ]
-plt.legend(handles=legend, fontsize=18, ncols=3)
-plt.xticks([1, 5, 9, 13, 17], before.keys(), fontsize=18)
-plt.title("December 2023", fontsize=20)
-plt.yticks(fontsize=18)
-plt.ylim([0, 800])
-plt.ylabel("# benchmarks", fontsize = 20)
 
-plt.subplots_adjust(left=0.1, bottom=0.1, right=0.99, 
-        top=0.92, wspace=0.1, hspace=0.1)
+plt.legend(handles=legend, fontsize=22, ncols=3)
+plt.xticks([1, 5, 9, 13, 17], before.keys(), fontsize=22)
+plt.title("December 2023", fontsize = 26)
+plt.ylabel("# benchmarks", fontsize = 26)
+plt.yticks(fontsize = 24)
+plt.ylim([0, 900])
+plt.subplots_adjust(left=0.12, bottom=0.1, right=0.99, 
+        top=0.91, wspace=0.1, hspace=0.1)
+
 plt.show()
 fig.savefig("sv_comp_after.pdf", format = "pdf")
 

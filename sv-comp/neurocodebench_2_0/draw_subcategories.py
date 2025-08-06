@@ -43,16 +43,19 @@ def draw_subcategory(df, filenames, shades, tool):
         marker = "s"
         color = "grey"
         text = "U"
+        space = 0.3
         if (category == "correct").prod():
             text = "\u2714"
             #text = "T"
             color = "green"
             marker = "^"
+            space = 0.5
         if (category == "wrong").prod():
             text = "\u2718"
             #text = "F"
             color = "red"
             marker = "v"
+            space = 0.7
         if (category == "error").prod():
             text = "!"
             color = "darkorange"
@@ -70,14 +73,13 @@ def draw_subcategory(df, filenames, shades, tool):
             color = "black"
             marker = "s"
         #print(value.iloc[0])
-        plt.text(i - 0.3, value.iloc[0], text, color=color, fontsize=24)
+        plt.text(i - space, value.iloc[0], text, color=color, fontsize=28)
         i = i + 1
 
-    plt.xticks(range(0, len(filenames)), labels = [""] * len(filenames), rotation=90, fontsize=16)
-    plt.yticks(fontsize=16)
-    #plt.xlabel("Benchmark name", fontsize=20)
-    plt.ylabel("CPU time (s)", fontsize=20)
-    plt.xlim(xmin, xmax)
+    plt.xticks(range(0, len(filenames)), labels = [""] * len(filenames), rotation=90, fontsize=18)
+    plt.yticks(fontsize=20)
+    plt.ylabel("CPU time (s)", fontsize=24)
+    plt.xlim(xmin + 0.5, xmax - 0.5)
     plt.ylim(ymin, ymax)
     plt.grid()
 
@@ -89,7 +91,7 @@ def draw_subcategory(df, filenames, shades, tool):
     ## calculating min/max values for the axes
     xmin = -1
     xmax = len(filenames)
-    ymax_val = df[df["run_filename_clean"].isin(filenames)][column].max()
+    ymax_val = df[df["run_filename_clean"].isin(filenames)][column].max() / 1e9
     ymin = -0.05 * ymax_val
     ymax = 1.15 * ymax_val
 
@@ -100,22 +102,25 @@ def draw_subcategory(df, filenames, shades, tool):
     ## plotting the values
     i = 0
     for filename in filenames:
-        value = df[df["run_filename_clean"] == filename][column]
+        value = df[df["run_filename_clean"] == filename][column] / 1e9
         category = df[df["run_filename_clean"] == filename]["category"]
         reason = df[df["run_filename_clean"] == filename]["terminationreason"]
         marker = "s"
         color = "grey"
         text = "U"
+        space = 0.3
         if (category == "correct").prod():
             text = "\u2714"
             #text = "T"
             color = "green"
             marker = "^"
+            space = 0.5
         if (category == "wrong").prod():
             text = "\u2718"
             #text = "F"
             color = "red"
             marker = "v"
+            space = 0.7
         if (category == "error").prod():
             text = "!"
             color = "darkorange"
@@ -132,19 +137,19 @@ def draw_subcategory(df, filenames, shades, tool):
             text = "^"
             color = "black"
             marker = "s"
-        plt.text(i - 0.3, value.iloc[0], text, color=color, fontsize=24)
+        plt.text(i - space, value.iloc[0], text, color=color, fontsize=28)
         i = i + 1
 
-    plt.xticks(range(0, len(filenames)), labels = filenames, rotation=90, fontsize=14)
-    plt.yticks(fontsize=16)
-    plt.xlabel("Benchmark name", fontsize=20)
-    plt.ylabel("Memory (B)", fontsize=20)
-    plt.xlim(xmin, xmax)
+    plt.xticks(range(0, len(filenames)), labels = filenames, rotation=90, fontsize=18)
+    plt.yticks(fontsize=20)
+    plt.xlabel("Benchmark name", fontsize=24)
+    plt.ylabel("Memory (GB)", fontsize=24)
+    plt.xlim(xmin + 0.5, xmax - 0.5)
     plt.ylim(ymin, ymax)
     plt.grid()
 
-    plt.subplots_adjust(left=0.055, bottom=0.42, right=0.995, 
-        top=0.95, wspace=0.15, hspace=0.1)
+    plt.subplots_adjust(left=0.055, bottom=0.51, right=0.995, 
+        top=0.99, wspace=0.1, hspace=0.05)
     plt.show()
     return fig
 
